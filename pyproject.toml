@@ -1,0 +1,27 @@
+[project]
+name = "A360LogsSeeker"
+version = "2.3.68"
+description = "Ultra-fast async credential and log search API powered by FastAPI, uvloop and ripgrep"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "uvloop",
+    "httptools",
+]
+
+[project.scripts]
+start = "main:application"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
+exclude = ["data*", "static*"]
