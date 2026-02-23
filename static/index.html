@@ -1,0 +1,1830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="description" content="A360LogsSeek — Blazing-fast async credential & log search API powered by uvloop and ripgrep.">
+    <meta name="keywords" content="A360LogsSeek, Credential Search, Log Search, Combo Search, API, ripgrep, uvloop">
+    <meta name="author" content="A360LogsSeek">
+    <title>A360LogsSeek — Blazing-Fast Log & Credential Search</title>
+    <link rel="icon" href="https://i.ibb.co/cXKbHb7K/photo-2025-08-09-10-06-41.jpg" type="image/jpeg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <meta property="og:title" content="A360LogsSeek — Blazing-Fast Log & Credential Search">
+    <meta property="og:description" content="Blazing-fast async credential & log search API powered by uvloop and ripgrep.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-tertiary: #18181b;
+            --bg-card: #1a1a1f;
+            --bg-card-hover: #222228;
+            --bg-input: #0d0d0f;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(255,255,255,0.15);
+            --border-focus: rgba(6, 182, 212, 0.5);
+            --gold: #f59e0b;
+            --gold-light: #fbbf24;
+            --cyan: #06b6d4;
+            --cyan-light: #22d3ee;
+            --purple: #8b5cf6;
+            --purple-light: #a78bfa;
+            --green: #22c55e;
+            --green-light: #4ade80;
+            --red: #ef4444;
+            --red-light: #f87171;
+            --radius: 16px;
+            --radius-sm: 12px;
+            --radius-xs: 8px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background: 
+                radial-gradient(ellipse 80% 60% at 10% 20%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 50% at 90% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse 40% 40% at 50% 50%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
+            animation: gradientShift 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes gradientShift {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Hero */
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 80px 24px 60px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--cyan);
+            box-shadow: 0 0 50px rgba(6, 182, 212, 0.25), 0 0 100px rgba(6, 182, 212, 0.1);
+            margin: 0 auto 20px;
+            display: block;
+            transition: var(--transition);
+        }
+
+        .logo:hover {
+            transform: scale(1.05) rotate(3deg);
+            box-shadow: 0 0 60px rgba(6, 182, 212, 0.4);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            transition: var(--transition);
+        }
+
+        .badge:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-card-hover);
+        }
+
+        .badge i {
+            color: var(--cyan);
+        }
+
+        .hero h1 {
+            font-size: clamp(42px, 10vw, 68px);
+            font-weight: 900;
+            letter-spacing: -3px;
+            line-height: 1;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--cyan-light) 0%, var(--purple-light) 50%, var(--gold-light) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .hero-desc {
+            font-size: 17px;
+            color: var(--text-secondary);
+            max-width: 560px;
+            margin: 0 auto 20px;
+            line-height: 1.7;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--green);
+            margin-bottom: 28px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 10px var(--green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.3); }
+        }
+
+        /* Stats Row */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            max-width: 500px;
+            margin: 0 auto 32px;
+        }
+
+        .stat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+
+        .stat:hover {
+            transform: translateY(-4px);
+            border-color: var(--cyan);
+            box-shadow: 0 10px 40px rgba(6, 182, 212, 0.15);
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .stat-icon i {
+            font-size: 14px;
+            color: var(--bg-primary);
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--cyan-light), var(--purple-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Search Section */
+        .search-section {
+            position: relative;
+            z-index: 1;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .search-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 24px;
+            transition: var(--transition);
+        }
+
+        .search-card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .search-card h2 {
+            font-size: 22px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--cyan-light), var(--purple-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .search-card > p {
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        /* Tabs */
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            border-radius: var(--radius-xs);
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-secondary);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            color: var(--bg-primary);
+            box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+            transition: var(--transition);
+            pointer-events: none;
+        }
+
+        .input-wrapper input, .input-wrapper select {
+            width: 100%;
+            padding: 16px 16px 16px 48px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .input-wrapper select {
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .input-wrapper input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .input-wrapper input:focus, .input-wrapper select:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+        }
+
+        .input-wrapper input:focus + i,
+        .input-wrapper:hover i {
+            color: var(--cyan);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 28px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--cyan), var(--cyan-light));
+            color: var(--bg-primary);
+            box-shadow: 0 4px 24px rgba(6, 182, 212, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(6, 182, 212, 0.45);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--purple), var(--purple-light));
+            color: var(--text-primary);
+            box-shadow: 0 4px 24px rgba(139, 92, 246, 0.25);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--green), var(--green-light));
+            color: var(--bg-primary);
+            box-shadow: 0 4px 24px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(34, 197, 94, 0.45);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            color: var(--bg-primary);
+            box-shadow: 0 4px 24px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-gold:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(245, 158, 11, 0.45);
+        }
+
+        /* Result Section */
+        .result-section {
+            display: none;
+            margin-top: 24px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-section.success {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .result-section.error {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .result-icon {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 20px;
+        }
+
+        .result-section.success .result-icon {
+            background: linear-gradient(135deg, var(--green), var(--green-light));
+            color: var(--bg-primary);
+        }
+
+        .result-section.error .result-icon {
+            background: linear-gradient(135deg, var(--red), var(--red-light));
+            color: var(--text-primary);
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .result-section.success .result-title { color: var(--green-light); }
+        .result-section.error .result-title { color: var(--red-light); }
+
+        .result-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 500px) {
+            .result-info { grid-template-columns: 1fr; }
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border);
+        }
+
+        .info-item i {
+            color: var(--cyan);
+            font-size: 14px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .info-item .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-item .value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .result-actions .btn {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .error-message {
+            color: var(--red-light);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Results Data List */
+        .results-data {
+            margin-top: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+        }
+
+        .results-data::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .results-data::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .results-data::-webkit-scrollbar-thumb {
+            background: var(--border-hover);
+            border-radius: 3px;
+        }
+
+        .results-data-item {
+            padding: 10px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--cyan-light);
+            border-bottom: 1px solid var(--border);
+            word-break: break-all;
+            transition: var(--transition-fast);
+        }
+
+        .results-data-item:last-child {
+            border-bottom: none;
+        }
+
+        .results-data-item:hover {
+            background: rgba(6, 182, 212, 0.05);
+        }
+
+        .results-data-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        .results-data-header span {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* Loading State */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 11, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            width: 64px;
+            height: 64px;
+            border: 4px solid var(--border);
+            border-top-color: var(--cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .loading-progress {
+            margin-top: 20px;
+            width: 280px;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .loading-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--cyan), var(--purple), var(--cyan));
+            background-size: 200% 100%;
+            animation: progressShimmer 2s linear infinite;
+            transition: width 0.3s ease;
+        }
+
+        @keyframes progressShimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Main Content */
+        .main {
+            position: relative;
+            z-index: 1;
+            padding: 48px 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 24px;
+            transition: var(--transition);
+        }
+
+        .section:hover {
+            border-color: var(--border-hover);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--cyan-light), var(--purple-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .section p {
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        @media (max-width: 800px) {
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 500px) {
+            .features-grid { grid-template-columns: 1fr; }
+        }
+
+        .feature {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 24px 20px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .feature:hover {
+            background: rgba(255,255,255,0.04);
+            transform: translateY(-4px);
+            border-color: var(--cyan);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+        }
+
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            border-radius: 14px;
+            margin: 0 auto 16px;
+            box-shadow: 0 8px 24px rgba(6, 182, 212, 0.25);
+        }
+
+        .feature-icon i {
+            font-size: 20px;
+            color: var(--text-primary);
+        }
+
+        .feature h3 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feature p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        /* Formats Grid */
+        .formats-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .format-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--cyan-light);
+            transition: var(--transition);
+        }
+
+        .format-tag:hover {
+            background: rgba(6, 182, 212, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .format-tag i {
+            font-size: 11px;
+        }
+
+        /* API Docs Section */
+        .api-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            padding: 32px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .api-section h3 {
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .api-section p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            max-width: 450px;
+        }
+
+        .code-block {
+            width: 100%;
+            max-width: 550px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 20px;
+            text-align: left;
+            position: relative;
+            overflow-x: auto;
+            margin-bottom: 8px;
+        }
+
+        .code-block code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--cyan-light);
+            word-break: break-all;
+        }
+
+        .code-block .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .code-block .copy-btn:hover {
+            color: var(--cyan);
+            border-color: var(--cyan);
+        }
+
+        /* Format Selector */
+        .format-selector {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 600px) {
+            .format-selector { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 400px) {
+            .format-selector { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .format-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 8px;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            transition: var(--transition);
+            user-select: none;
+        }
+
+        .format-option:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+
+        .format-option.active {
+            border-color: var(--purple);
+            background: rgba(139, 92, 246, 0.12);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+        }
+
+        .format-option i {
+            font-size: 18px;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .format-option.active i {
+            color: var(--purple-light);
+        }
+
+        .format-option .format-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .format-option.active .format-name {
+            color: var(--purple-light);
+        }
+
+        .format-option .format-desc {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .format-option.active .format-desc {
+            color: var(--text-secondary);
+        }
+
+        /* Social Icons */
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .social-icons a {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-size: 18px;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .social-icons a:hover {
+            color: var(--cyan);
+            border-color: var(--cyan);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(6, 182, 212, 0.2);
+        }
+
+        /* Footer */
+        footer {
+            position: relative;
+            z-index: 1;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 48px 24px 32px;
+            text-align: center;
+        }
+
+        footer h3 {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--cyan-light), var(--purple-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .footer-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            margin-bottom: 16px;
+        }
+
+        .footer-text a {
+            color: var(--cyan);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .footer-text a:hover {
+            color: var(--purple-light);
+        }
+
+        .copyright {
+            font-size: 12px;
+            color: var(--text-muted);
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 16px 20px;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(120%);
+            transition: var(--transition);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast.success { border-color: rgba(34, 197, 94, 0.3); }
+        .toast.error { border-color: rgba(239, 68, 68, 0.3); }
+        .toast.success i { color: var(--green); }
+        .toast.error i { color: var(--red); }
+        .toast i { font-size: 18px; }
+        .toast span { font-size: 14px; font-weight: 600; }
+        .toast button {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 8px;
+            transition: var(--transition);
+        }
+        .toast button:hover { color: var(--cyan); }
+
+        /* History Section */
+        .history-section {
+            margin-top: 24px;
+        }
+
+        .history-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .history-title h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-title h4 i {
+            color: var(--cyan);
+        }
+
+        .history-clear {
+            font-size: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+            background: none;
+            border: none;
+        }
+
+        .history-clear:hover {
+            color: var(--red-light);
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .history-item:hover {
+            background: rgba(6, 182, 212, 0.05);
+            border-color: var(--cyan);
+        }
+
+        .history-item i {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .history-item span {
+            flex: 1;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-item .history-type {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 100px;
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--cyan-light);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .history-empty {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* Mobile */
+        @media (max-width: 600px) {
+            .hero { padding: 60px 16px 48px; }
+            .logo { width: 90px; height: 90px; }
+            .hero h1 { font-size: 38px; letter-spacing: -2px; }
+            .stats { gap: 8px; }
+            .stat { padding: 12px 8px; }
+            .stat-icon { width: 30px; height: 30px; }
+            .stat-icon i { font-size: 12px; }
+            .stat-value { font-size: 16px; }
+            .stat-label { font-size: 9px; }
+            .section { padding: 24px 16px; }
+            .main { padding: 32px 16px; }
+            .search-card { padding: 24px 16px; }
+            .input-group { flex-direction: column; }
+            .btn { width: 100%; }
+            .result-actions { flex-direction: column; }
+            .result-actions .btn { min-width: auto; }
+            .tab-btn { font-size: 11px; padding: 10px 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Searching Logs...</p>
+            <p class="loading-subtext" id="loadingSubtext">Scanning datastores with ripgrep</p>
+            <div class="loading-progress">
+                <div class="loading-progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <img src="https://i.ibb.co/cXKbHb7K/photo-2025-08-09-10-06-41.jpg" alt="A360LogsSeek" class="logo">
+        <div class="badge">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Powered by uvloop & ripgrep</span>
+        </div>
+        <h1>A360LogsSeek</h1>
+        <p class="hero-desc">Blazing-fast async credential & log search API. Search through massive datasets in milliseconds with powerful extraction pipelines.</p>
+        <div class="status">
+            <span class="status-dot"></span>
+            <span>Service Online — v2.3.68</span>
+        </div>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                <span class="stat-value">3</span>
+                <span class="stat-label">Endpoints</span>
+            </div>
+            <div class="stat">
+                <div class="stat-icon"><i class="fa-solid fa-bolt"></i></div>
+                <span class="stat-value">Fast</span>
+                <span class="stat-label">ripgrep</span>
+            </div>
+            <div class="stat">
+                <div class="stat-icon"><i class="fa-solid fa-layer-group"></i></div>
+                <span class="stat-value">Async</span>
+                <span class="stat-label">uvloop</span>
+            </div>
+            <div class="stat">
+                <div class="stat-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <span class="stat-value">Safe</span>
+                <span class="stat-label">Filtered</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Section -->
+    <div class="search-section">
+        <div class="search-card">
+            <h2><i class="fa-solid fa-magnifying-glass"></i> Search Logs</h2>
+            <p>Select an endpoint and enter a site/domain to search</p>
+
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="switchTab('cmb')" id="tabCmb">
+                    <i class="fa-solid fa-key"></i> Combo
+                </button>
+                <button class="tab-btn" onclick="switchTab('extr')" id="tabExtr">
+                    <i class="fa-solid fa-filter"></i> Extract
+                </button>
+                <button class="tab-btn" onclick="switchTab('ulp')" id="tabUlp">
+                    <i class="fa-solid fa-file-lines"></i> ULP
+                </button>
+            </div>
+
+            <!-- CMB Tab -->
+            <div class="tab-content active" id="contentCmb">
+                <form onsubmit="doSearch(event, 'cmb')">
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <input type="text" id="cmbSite" placeholder="example.com" required autocomplete="off" spellcheck="false">
+                            <i class="fa-solid fa-globe"></i>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="cmbBtn">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span>Search</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- EXTR Tab -->
+            <div class="tab-content" id="contentExtr">
+                <form onsubmit="doSearch(event, 'extr')">
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <input type="text" id="extrSite" placeholder="example.com" required autocomplete="off" spellcheck="false">
+                            <i class="fa-solid fa-globe"></i>
+                        </div>
+                    </div>
+                    <div class="format-selector" id="formatSelector">
+                        <div class="format-option active" data-value="mailpass" onclick="selectFormat(this)">
+                            <i class="fa-solid fa-envelope"></i>
+                            <span class="format-name">mailpass</span>
+                            <span class="format-desc">Email:Pass</span>
+                        </div>
+                        <div class="format-option" data-value="userpass" onclick="selectFormat(this)">
+                            <i class="fa-solid fa-user"></i>
+                            <span class="format-name">userpass</span>
+                            <span class="format-desc">User:Pass</span>
+                        </div>
+                        <div class="format-option" data-value="num_pass" onclick="selectFormat(this)">
+                            <i class="fa-solid fa-phone"></i>
+                            <span class="format-name">num_pass</span>
+                            <span class="format-desc">Phone:Pass</span>
+                        </div>
+                        <div class="format-option" data-value="domain" onclick="selectFormat(this)">
+                            <i class="fa-solid fa-globe"></i>
+                            <span class="format-name">domain</span>
+                            <span class="format-desc">Domains</span>
+                        </div>
+                        <div class="format-option" data-value="url" onclick="selectFormat(this)">
+                            <i class="fa-solid fa-link"></i>
+                            <span class="format-name">url</span>
+                            <span class="format-desc">Full URLs</span>
+                        </div>
+                    </div>
+                    <input type="hidden" id="extrFormat" value="mailpass">
+                    <div style="margin-top:16px;">
+                        <button type="submit" class="btn btn-secondary" id="extrBtn" style="width:100%;">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span>Extract</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ULP Tab -->
+            <div class="tab-content" id="contentUlp">
+                <form onsubmit="doSearch(event, 'ulp')">
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <input type="text" id="ulpSite" placeholder="example.com" required autocomplete="off" spellcheck="false">
+                            <i class="fa-solid fa-globe"></i>
+                        </div>
+                        <button type="submit" class="btn btn-success" id="ulpBtn">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <span>Search</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Result Section -->
+            <div class="result-section" id="resultSection">
+                <div class="result-header">
+                    <div class="result-icon">
+                        <i class="fa-solid fa-check" id="resultIconSuccess"></i>
+                        <i class="fa-solid fa-xmark" id="resultIconError" style="display:none;"></i>
+                    </div>
+                    <span class="result-title" id="resultTitle">Search Complete!</span>
+                </div>
+
+                <div class="result-info" id="resultInfo">
+                    <div class="info-item">
+                        <i class="fa-solid fa-globe"></i>
+                        <div>
+                            <div class="label">Site</div>
+                            <div class="value" id="infoSite">-</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fa-solid fa-hashtag"></i>
+                        <div>
+                            <div class="label">Results</div>
+                            <div class="value" id="infoResults">-</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fa-solid fa-clone"></i>
+                        <div>
+                            <div class="label">Duplicates Removed</div>
+                            <div class="value" id="infoDuplicates">-</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fa-solid fa-clock"></i>
+                        <div>
+                            <div class="label">Time</div>
+                            <div class="value" id="infoTime">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-actions" id="resultActions">
+                    <button class="btn btn-primary" onclick="copyAllResults()">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Copy All</span>
+                    </button>
+                    <button class="btn btn-gold" onclick="downloadResults()">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Download TXT</span>
+                    </button>
+                </div>
+
+                <div class="results-data-header" id="resultsDataHeader" style="display:none;">
+                    <span id="resultsDataCount">0 items</span>
+                </div>
+                <div class="results-data" id="resultsData" style="display:none;"></div>
+
+                <p class="error-message" id="errorMessage" style="display:none;"></p>
+            </div>
+
+            <!-- History Section -->
+            <div class="history-section" id="historySection">
+                <div class="history-title">
+                    <h4><i class="fa-solid fa-clock-rotate-left"></i> Recent Searches</h4>
+                    <button class="history-clear" id="clearHistory">Clear All</button>
+                </div>
+                <div class="history-list" id="historyList">
+                    <div class="history-empty">No recent searches</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+        <section class="section">
+            <h2 class="section-title">Available Endpoints</h2>
+            <p>Three powerful search & extraction pipelines at your fingertips.</p>
+            <div class="formats-grid">
+                <span class="format-tag"><i class="fa-solid fa-key"></i> /cmb — Combo Search</span>
+                <span class="format-tag"><i class="fa-solid fa-filter"></i> /extr — Extract</span>
+                <span class="format-tag"><i class="fa-solid fa-file-lines"></i> /ulp — ULP Lines</span>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Extraction Formats</h2>
+            <p>The /extr endpoint supports multiple credential & structural formats.</p>
+            <div class="formats-grid">
+                <span class="format-tag"><i class="fa-solid fa-envelope"></i> mailpass</span>
+                <span class="format-tag"><i class="fa-solid fa-user"></i> userpass</span>
+                <span class="format-tag"><i class="fa-solid fa-phone"></i> num_pass</span>
+                <span class="format-tag"><i class="fa-solid fa-globe"></i> domain</span>
+                <span class="format-tag"><i class="fa-solid fa-link"></i> url</span>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Premium Features</h2>
+            <div class="features-grid">
+                <div class="feature">
+                    <div class="feature-icon"><i class="fa-solid fa-rocket"></i></div>
+                    <h3>Lightning Fast</h3>
+                    <p>Powered by ripgrep & uvloop for blazing-fast async search.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <h3>Batch Processing</h3>
+                    <p>Intelligent batching with thread pool executors for massive datasets.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon"><i class="fa-solid fa-filter"></i></div>
+                    <h3>Smart Filtering</h3>
+                    <p>Blacklist filtering, deduplication, and validation built-in.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon"><i class="fa-solid fa-plug"></i></div>
+                    <h3>Plugin System</h3>
+                    <p>Modular plugin architecture — add endpoints dynamically.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <h3>Input Validation</h3>
+                    <p>Regex-based credential validation & username sanitization.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon"><i class="fa-solid fa-code"></i></div>
+                    <h3>RESTful API</h3>
+                    <p>Clean FastAPI endpoints with auto-generated Swagger docs.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="api-section">
+            <h3><i class="fa-solid fa-terminal"></i> API Endpoints</h3>
+            <p>Use the API directly in your applications for automated searching.</p>
+            <div class="code-block">
+                <code>GET /cmb?site=example.com</code>
+                <button class="copy-btn" onclick="copyCode('/cmb?site=example.com')" title="Copy"><i class="fa-solid fa-copy"></i></button>
+            </div>
+            <div class="code-block">
+                <code>GET /extr?site=example.com&format=mailpass</code>
+                <button class="copy-btn" onclick="copyCode('/extr?site=example.com&format=mailpass')" title="Copy"><i class="fa-solid fa-copy"></i></button>
+            </div>
+            <div class="code-block">
+                <code>GET /ulp?site=example.com</code>
+                <button class="copy-btn" onclick="copyCode('/ulp?site=example.com')" title="Copy"><i class="fa-solid fa-copy"></i></button>
+            </div>
+            <a href="/docs" class="btn btn-gold" target="_blank">
+                <i class="fa-solid fa-book"></i>
+                <span>View Swagger Docs</span>
+            </a>
+        </div>
+
+        <section class="section">
+            <h2 class="section-title">How It Works</h2>
+            <p>Enter a site/domain → ripgrep scans all datastores at blazing speed → Results are extracted, deduplicated, and validated → Get clean, structured output instantly via JSON API.</p>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <h3>A360LogsSeek</h3>
+        <p class="footer-text">
+            Blazing-fast async credential & log search API.<br>
+            Powered by <a href="/docs" target="_blank">FastAPI</a> + uvloop + ripgrep
+        </p>
+        <div class="social-icons">
+            <a href="https://t.me/a360logsseek" target="_blank" title="Telegram"><i class="fa-brands fa-telegram"></i></a>
+            <a href="https://discord.gg/a360logsseek" target="_blank" title="Discord"><i class="fa-brands fa-discord"></i></a>
+            <a href="https://github.com/a360logsseek" target="_blank" title="GitHub"><i class="fa-brands fa-github"></i></a>
+            <a href="https://twitter.com/a360logsseek" target="_blank" title="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+        </div>
+        <div class="copyright">© 2025 A360LogsSeek v2.3.68. All Rights Reserved.</div>
+    </footer>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toastMessage">Copied!</span>
+        <button onclick="hideToast()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentResults = [];
+        let currentSite = '';
+        let currentType = '';
+        let progressInterval = null;
+
+        // Format selector
+        function selectFormat(el) {
+            document.querySelectorAll('.format-option').forEach(o => o.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('extrFormat').value = el.dataset.value;
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+            document.getElementById('content' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+            hideResult();
+        }
+
+        // Search
+        async function doSearch(e, type) {
+            e.preventDefault();
+            let site = '';
+            let url = '';
+
+            if (type === 'cmb') {
+                site = document.getElementById('cmbSite').value.trim();
+                url = `${API_BASE}/cmb?site=${encodeURIComponent(site)}`;
+            } else if (type === 'extr') {
+                site = document.getElementById('extrSite').value.trim();
+                const format = document.getElementById('extrFormat').value;
+                url = `${API_BASE}/extr?site=${encodeURIComponent(site)}&format=${format}`;
+            } else if (type === 'ulp') {
+                site = document.getElementById('ulpSite').value.trim();
+                url = `${API_BASE}/ulp?site=${encodeURIComponent(site)}`;
+            }
+
+            if (!site) {
+                showToast('Please enter a site/domain', 'error');
+                return;
+            }
+
+            currentSite = site;
+            currentType = type;
+            showLoading();
+            hideResult();
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                hideLoading();
+
+            if (response.ok) {
+                    // Extract results array — handle both wrapped and flat responses
+                    let items = [];
+                    const payload = data.data || data;
+                    items = payload.combos || payload.matches || payload.lines || [];
+                    showSuccess(data, items, site, type);
+                    addToHistory(site, type, items.length);
+                } else {
+                    showError(data.error || data.detail || 'Search failed');
+                }
+            } catch (error) {
+                hideLoading();
+                showError('Network error. Please check your connection.');
+                console.error('Search error:', error);
+            }
+        }
+
+        // Loading
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('show');
+            const pb = document.getElementById('progressBar');
+            pb.style.width = '0%';
+            let progress = 0;
+            const msgs = [
+                'Scanning datastores with ripgrep...',
+                'Processing matches...',
+                'Extracting credentials...',
+                'Deduplicating results...',
+                'Finalizing output...'
+            ];
+            let mi = 0;
+            progressInterval = setInterval(() => {
+                progress += Math.random() * 20;
+                if (progress > 90) progress = 90;
+                pb.style.width = progress + '%';
+                if (Math.random() > 0.6 && mi < msgs.length - 1) {
+                    mi++;
+                    document.getElementById('loadingSubtext').textContent = msgs[mi];
+                }
+            }, 400);
+        }
+
+        function hideLoading() {
+            if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
+            document.getElementById('progressBar').style.width = '100%';
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.remove('show');
+            }, 250);
+        }
+
+        // Show Success
+        function showSuccess(data, items, site, type) {
+            const rs = document.getElementById('resultSection');
+            rs.classList.remove('error');
+            rs.classList.add('success', 'show');
+
+            document.getElementById('resultIconSuccess').style.display = 'block';
+            document.getElementById('resultIconError').style.display = 'none';
+            document.getElementById('resultTitle').textContent = 'Search Complete!';
+
+            document.getElementById('resultInfo').style.display = 'grid';
+            document.getElementById('resultActions').style.display = 'flex';
+            document.getElementById('errorMessage').style.display = 'none';
+
+            document.getElementById('infoSite').textContent = site;
+            document.getElementById('infoResults').textContent = (data.results_count !== undefined ? data.results_count : items.length).toLocaleString();
+            document.getElementById('infoDuplicates').textContent = (data.duplicates_removed !== undefined ? data.duplicates_removed : 0).toLocaleString();
+            document.getElementById('infoTime').textContent = data.execution_time || '-';
+
+            currentResults = items;
+
+            // Render results list
+            const dataEl = document.getElementById('resultsData');
+            const headerEl = document.getElementById('resultsDataHeader');
+            const countEl = document.getElementById('resultsDataCount');
+
+            if (items.length > 0) {
+                headerEl.style.display = 'flex';
+                dataEl.style.display = 'block';
+                countEl.textContent = items.length.toLocaleString() + ' items';
+                const displayItems = items.slice(0, 500);
+                dataEl.innerHTML = displayItems.map(item =>
+                    `<div class="results-data-item">${escapeHtml(item)}</div>`
+                ).join('') + (items.length > 500 ? `<div class="results-data-item" style="color:var(--text-muted);text-align:center;">... and ${(items.length - 500).toLocaleString()} more</div>` : '');
+            } else {
+                headerEl.style.display = 'none';
+                dataEl.style.display = 'none';
+            }
+
+            showToast(`Found ${items.length.toLocaleString()} results!`, 'success');
+        }
+
+        // Show Error
+        function showError(message) {
+            const rs = document.getElementById('resultSection');
+            rs.classList.remove('success');
+            rs.classList.add('error', 'show');
+
+            document.getElementById('resultIconSuccess').style.display = 'none';
+            document.getElementById('resultIconError').style.display = 'block';
+            document.getElementById('resultTitle').textContent = 'Search Failed';
+
+            document.getElementById('resultInfo').style.display = 'none';
+            document.getElementById('resultActions').style.display = 'none';
+            document.getElementById('resultsDataHeader').style.display = 'none';
+            document.getElementById('resultsData').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+
+            showToast('Search failed', 'error');
+        }
+
+        function hideResult() {
+            document.getElementById('resultSection').classList.remove('show', 'success', 'error');
+        }
+
+        // Copy All Results
+        function copyAllResults() {
+            if (currentResults.length) {
+                navigator.clipboard.writeText(currentResults.join('\n')).then(() => {
+                    showToast('All results copied!', 'success');
+                }).catch(() => showToast('Failed to copy', 'error'));
+            }
+        }
+
+        // Download Results
+        function downloadResults() {
+            if (!currentResults.length) return;
+            const blob = new Blob([currentResults.join('\n')], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentType}_${currentSite}_${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Download started!', 'success');
+        }
+
+        // Copy API code block
+        function copyCode(endpoint) {
+            navigator.clipboard.writeText(API_BASE + endpoint).then(() => {
+                showToast('Endpoint copied!', 'success');
+            }).catch(() => showToast('Failed to copy', 'error'));
+        }
+
+        // History
+        function getHistory() {
+            try { return JSON.parse(localStorage.getItem('a360_history') || '[]'); }
+            catch { return []; }
+        }
+
+        function saveHistory(h) {
+            localStorage.setItem('a360_history', JSON.stringify(h.slice(0, 10)));
+        }
+
+        function addToHistory(site, type, count) {
+            const h = getHistory();
+            const entry = { site, type, count, ts: Date.now() };
+            const filtered = h.filter(x => !(x.site === site && x.type === type));
+            filtered.unshift(entry);
+            saveHistory(filtered);
+            renderHistory(filtered);
+        }
+
+        function renderHistory(history) {
+            const el = document.getElementById('historyList');
+            if (!history.length) {
+                el.innerHTML = '<div class="history-empty">No recent searches</div>';
+                return;
+            }
+            el.innerHTML = history.slice(0, 5).map(item => `
+                <div class="history-item" onclick="fillAndSearch('${escapeHtml(item.site)}', '${item.type}')">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <span>${escapeHtml(item.site)}</span>
+                    <span class="history-type">${item.type}</span>
+                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                </div>
+            `).join('');
+        }
+
+        function fillAndSearch(site, type) {
+            switchTab(type);
+            if (type === 'cmb') document.getElementById('cmbSite').value = site;
+            else if (type === 'extr') document.getElementById('extrSite').value = site;
+            else if (type === 'ulp') document.getElementById('ulpSite').value = site;
+        }
+
+        document.getElementById('clearHistory').addEventListener('click', () => {
+            localStorage.removeItem('a360_history');
+            renderHistory([]);
+            showToast('History cleared', 'success');
+        });
+
+        // Toast
+        let toastTimeout;
+        function showToast(message, type) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            t.className = 'toast ' + type;
+            t.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(hideToast, 3000);
+        }
+
+        function hideToast() {
+            document.getElementById('toast').classList.remove('show');
+        }
+
+        // Utility
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                e.preventDefault();
+                const activeTab = document.querySelector('.tab-content.active');
+                const input = activeTab.querySelector('input[type="text"]');
+                if (input) input.focus();
+            }
+        });
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            renderHistory(getHistory());
+        });
+    </script>
+</body>
+</html>
